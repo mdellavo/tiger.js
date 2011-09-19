@@ -175,7 +175,7 @@ function log() {
         return new Template(body);
     }
     
-    this.mako = function(tmpl) {
+    this.tiger = function(tmpl) {
         return compile(tokenize(tmpl));
     }
     
@@ -214,7 +214,7 @@ var data = {
 section("Data");
 log(data);
 
-var tmpl = mako(test);
+var tmpl = tiger(test);
 var text = tmpl.render(data);
 
 section("Output");
