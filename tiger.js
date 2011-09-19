@@ -1,0 +1,222 @@
+function repeat(c, n) {
+    return Array(n).join(c)
+}
+
+function section(s) {
+    var bar = repeat('-', 80 - (s.length + 1));
+    console.log("\n" + s + ' ' + bar + "\n");
+}
+
+function log() {
+    console.log.apply(console, arguments);
+}
+
+(function() {
+   
+    function Context(locals) {
+        this.buffer = [];
+        this.locals = locals;
+    }
+
+    Context.prototype.write = function(s) {
+        this.buffer.push(s);
+    }    
+
+    Context.prototype.get = function() {
+        return this.buffer.join('');
+    }
+
+    function Template(body) {
+        var sandbox = "with(context.locals) {\n$body\n}";
+        var sandboxed = sandbox.replace('$body', body);
+                
+        section("Sandboxed ");
+        log(sandboxed)
+
+        try {
+            this.impl = new Function('context', sandboxed)
+        } catch(err) {
+            section("Compilation Error  ");
+            log(err);
+        }
+    }
+
+    Template.prototype.render = function(locals) {
+        context = new Context(locals);
+
+        section("Rendering");
+        try {
+
+            this.impl(context);
+        } catch(err) {
+            section("Error");
+            log(err);
+        }
+
+        return context.get();
+    }
+    
+    function match_regex(pattern) {
+        return function(s) {
+            var rv = null;          
+            var match = s.match(pattern);
+            if(match)
+                rv = {0: match[0],
+                      1: match[1]};
+
+            return rv;
+        }
+    }
+
+    function match_block(s) {
+        var rv = null;
+        if(s.match(/^<%/)) {
+
+            close = s.match(/%>/)
+            if(close) {
+                rv = {0: s.substring(0, close.index + 2),
+                      1: s.substring(2, close.index)};               
+            }
+        }
+
+        return rv;
+    }
+
+    var patterns = [
+        {name: 'block', match: match_block},
+        {name: 'variable', match: match_regex(/^\${([^}]*)}/)},
+        {name: 'end-control', match: match_regex(/^%end([^\n]+)\n/)},
+        {name: 'else', match: match_regex(/^%else\n/)},
+        {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)},
+    ];
+ 
+    function consume(consumed) {
+        return {name: 'text', data: clean_text(consumed.join(''))};
+    } 
+
+    function tokenize(input) {        
+        var rv = [];        
+        var consumed = [];
+        
+        while(input) {
+
+            var token, pattern;
+            for(var j=0; j<patterns.length; j++) {
+                pattern = patterns[j];
+                token = pattern.match(input)
+                if(token)
+                    break;
+            }
+            
+            var pos;
+            if(token) {
+                pos = token[0].length;
+
+                if(consumed.length>0)
+                    rv.push(consume(consumed));
+
+                consumed = [];
+
+                rv.push({name: pattern.name, data: token});
+            } else {
+                consumed.push(input[0]);
+                pos = 1;
+            }
+
+            input = input.substring(pos);
+        }
+
+        if(consumed.length>0)
+            rv.push(consume(consumed));
+
+        return rv;
+    }
+
+    function clean_text(s) {
+        return s.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+    }
+
+    var nodes = {
+        'text': function(token) { 
+            return  'context.write(\"' + token.data + '");' 
+        },
+        'variable': function(token) {
+            return 'context.write(' + token.data[1] + ');' 
+        },
+        'block': function(token) {
+            return token.data[1];
+        },
+        'start-control': function(token) {
+            return token.data[1] + '{' 
+        },
+        'end-control': function(token) {
+            return '}' 
+        },
+        'else': function(token) { 
+            return '} else { ' 
+        }
+    }
+
+    function compile(tokens) {
+
+        section("Compile");
+        log(tokens);
+
+        var fragments = [];
+
+        for(var i=0; i<tokens.length; i++) {
+            var token = tokens[i];
+            var fragment = nodes[token.name](token);
+            fragments.push(fragment);
+        }
+
+        var body = fragments.join("\n");
+
+        return new Template(body);
+    }
+    
+    this.mako = function(tmpl) {
+        return compile(tokenize(tmpl));
+    }
+    
+})();
+
+var test = 
+    "x is <stong>${x}</strong>\n"                 +
+    "%if(x%2 == 0)\n"                             +
+    "x is even"                                   +
+    "%else\n"                                     +
+    "x is odd"                                    +
+    "%endif\n"                                    +
+    "<%\n"                                        +
+    "  console.log('!!! in a block');\n"          +
+    "  console.log(context);\n"                   +
+    "%>\n"                                        +
+    "%for(var i=0; i<people.length; i++)\n"       +
+    "<tr class=\"${ (i%2) ? 'odd' : 'even'}\">\n" +
+    "  <td>${people[i].first}</td>\n"             +
+    "  <td>${people[i].last}</td>\n"              +
+    "  <td>${people[i].email}</td>\n"             +
+    "</tr>\n"                                     +
+    "%endfor\n";
+
+var data = {
+    x: 123, 
+
+    people: [
+        {first: 'John', last: 'Doe', email: 'john.doe@example.com'},
+        {first: 'Jane', last: 'Doe', email: 'jane.doe@example.com'},
+        {first: 'Alice', last: 'Smith', email: 'asmith@example.com'},
+        {first: 'Bob', last: 'Jones', email: 'bjsones@example.com'}
+    ]
+};
+
+section("Data");
+log(data);
+
+var tmpl = mako(test);
+var text = tmpl.render(data);
+
+section("Output");
+log(text);
+
