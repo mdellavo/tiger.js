@@ -1,3 +1,14 @@
+// -----------------------------------------------------------------------------
+// Tiger.js
+// 
+// Mako-like template preprocessor for javascript
+//
+//
+// FIXME switch to jison for parsing
+//  
+// -----------------------------------------------------------------------------
+
+
 function repeat(c, n) {
     return Array(n).join(c)
 }
@@ -58,11 +69,9 @@ function log() {
     
     function match_regex(pattern) {
         return function(s) {
-            var rv = null;          
-            var match = s.match(pattern);
-            if(match)
-                rv = {0: match[0],
-                      1: match[1]};
+            var rv = s.match(pattern);
+            if(rv)
+                delete rv['input'];
 
             return rv;
         }
@@ -82,14 +91,35 @@ function log() {
         return rv;
     }
 
+    var tag_open = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
+    var tag_close = /^\<\/%[\t ]*(.+?)[\t ]*>/;
+    var attrs_pattern = /\s*(\w+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\")/g;
+    var match_regex_tag_open = match_regex(tag_open);
+
+    function match_open_tag(s) {
+        var rv = match_regex_tag_open(s);
+
+        if(rv) {
+            rv.attrs = {};
+
+            var i;
+            while((i = attrs_pattern.exec(rv[2])))
+                rv.attrs[i[1]] = i[3];
+        }
+
+        return rv;        
+    }
+
     var patterns = [
         {name: 'block', match: match_block},
         {name: 'variable', match: match_regex(/^\${([^}]*)}/)},
+        {name: 'start-tag', match: match_open_tag},
+        {name: 'end-tag', match: match_regex(tag_close)},
         {name: 'end-control', match: match_regex(/^%end([^\n]+)\n/)},
         {name: 'else', match: match_regex(/^%else\n/)},
-        {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)},
+        {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)}
     ];
- 
+
     function consume(consumed) {
         return {name: 'text', data: clean_text(consumed.join(''))};
     } 
@@ -154,6 +184,24 @@ function log() {
         },
         'else': function(token) { 
             return '} else { ' 
+        }, 
+        'start-tag': function(token) {
+            var tag_name = token.data[1];
+            var i;
+
+            if(tag_name == 'function') { 
+                return 'function ' + token.data.attrs.name + '{'
+
+            }else if(tag_name.substring(0, 5) == 'this:') {          
+                // FIXME how do i pass attrs
+                return tag_name.substring(5) + '(' + ');';
+            }
+        }, 
+        'end-tag': function(token) {
+            var tag_name = token.data[1];
+            if(tag_name == 'function') { 
+                return '}'
+            }             
         }
     }
 
@@ -192,13 +240,19 @@ var test =
     "  console.log('!!! in a block');\n"          +
     "  console.log(context);\n"                   +
     "%>\n"                                        +
+    "<%function name=\"foo()\">"                  +
+    "!!! in foo"                                  +
+    "${console.log(arguments)}"                   +
+    "</%function>"                                +
     "%for(var i=0; i<people.length; i++)\n"       +
     "<tr class=\"${ (i%2) ? 'odd' : 'even'}\">\n" +
     "  <td>${people[i].first}</td>\n"             +
     "  <td>${people[i].last}</td>\n"              +
     "  <td>${people[i].email}</td>\n"             +
     "</tr>\n"                                     +
-    "%endfor\n";
+    "%endfor\n"                                   +
+    "${foo(1,2,3,'blah')}\n"                      +
+    "<%this:foo/>";
 
 var data = {
     x: 123, 
