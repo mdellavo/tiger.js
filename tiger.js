@@ -5,6 +5,12 @@
 //
 //
 // FIXME switch to jison for parsing
+//
+// Object model for templates
+//   templates will be applied to an object for execution
+//   functions will insert themselves into current context
+//   other objects can be mapped to scope with namespace tags
+//   when called, we execute a qualified function (this:foo)
 //  
 // -----------------------------------------------------------------------------
 
@@ -91,10 +97,11 @@ function log() {
         return rv;
     }
 
-    var tag_open = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
-    var tag_close = /^\<\/%[\t ]*(.+?)[\t ]*>/;
+    var tag_open_pattern = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
+    var tag_close_pattern = /^\<\/%[\t ]*(.+?)[\t ]*>/;
+    var variable_pattern = /^\${([^}]*)}/;
     var attrs_pattern = /\s*(\w+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\")/g;
-    var match_regex_tag_open = match_regex(tag_open);
+    var match_regex_tag_open = match_regex(tag_open_pattern);
 
     function match_open_tag(s) {
         var rv = match_regex_tag_open(s);
@@ -102,9 +109,13 @@ function log() {
         if(rv) {
             rv.attrs = {};
 
+            // FIXME this seems hacky
             var i;
-            while((i = attrs_pattern.exec(rv[2])))
-                rv.attrs[i[1]] = i[3];
+            while((i = attrs_pattern.exec(rv[2]))) {
+                var k = i[1];
+                var v = i[3];
+                rv.attrs[k] = v;
+            }
         }
 
         return rv;        
@@ -112,9 +123,9 @@ function log() {
 
     var patterns = [
         {name: 'block', match: match_block},
-        {name: 'variable', match: match_regex(/^\${([^}]*)}/)},
+        {name: 'variable', match: match_regex(variable_pattern)},
         {name: 'start-tag', match: match_open_tag},
-        {name: 'end-tag', match: match_regex(tag_close)},
+        {name: 'end-tag', match: match_regex(tag_close_pattern)},
         {name: 'end-control', match: match_regex(/^%end([^\n]+)\n/)},
         {name: 'else', match: match_regex(/^%else\n/)},
         {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)}
@@ -192,9 +203,26 @@ function log() {
             if(tag_name == 'function') { 
                 return 'function ' + token.data.attrs.name + '{'
 
-            }else if(tag_name.substring(0, 5) == 'this:') {          
-                // FIXME how do i pass attrs
-                return tag_name.substring(5) + '(' + ');';
+            } else if(tag_name.substring(0, 5) == 'this:') {          
+                // FIXME object scoping rules
+
+                // FIXME handle variables
+                params = [];
+
+                for(var k in token.data.attrs) {
+                    var v = token.data.attrs[k];
+                    var match = v.match(variable_pattern);
+                    if(match) {
+                        v = match[1];
+                    } else {
+                        v = "'" + v + "'";
+                    }
+
+                    params.push(k + ': ' + v);
+                }
+                
+                var arg = '{' + params.join(', ') + '}';
+                return tag_name.substring(5) + '(' + arg + ');';
             }
         }, 
         'end-tag': function(token) {
@@ -252,7 +280,10 @@ var test =
     "</tr>\n"                                     +
     "%endfor\n"                                   +
     "${foo(1,2,3,'blah')}\n"                      +
-    "<%this:foo/>";
+    "<%this:foo bar=\"1\" qux=\"${context}\"/>";
+
+section("Source");
+log(test);
 
 var data = {
     x: 123, 
