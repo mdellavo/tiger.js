@@ -33,7 +33,8 @@ function log() {
     function Context(locals) {
         this.buffer = [];
         this.locals = locals;
-        this.namespaces = {'this': {}};
+        this.this_ = {};
+        this.namespaces = {};
     }
 
     Context.prototype.write = function(s) {
@@ -41,7 +42,7 @@ function log() {
     }    
 
     Context.prototype.add_function = function(name, f) {
-        this.namespaces['this'][name] = f;
+        this.this_[name] = f;
     }
 
     Context.prototype.get = function() {
@@ -49,7 +50,7 @@ function log() {
     }
 
     function Template(body) {
-        var sandbox = "with(context.locals) {\n$body\n}";
+        var sandbox = "with(context.namespaces) {\nwith(context.locals) {\n$body\n}\n}";
         var sandboxed = sandbox.replace('$body', body);
                 
         section("Sandboxed ");
@@ -68,8 +69,7 @@ function log() {
 
         section("Rendering");
         try {
-
-            this.impl(context);
+            this.impl.call(context.this_, context);
         } catch(err) {
             section("Error");
             log(err);
@@ -110,10 +110,8 @@ function log() {
 
     function match_open_tag(s) {
         var rv = match_regex_tag_open(s);
-
         if(rv) {
             rv.attrs = {};
-
             // FIXME this seems hacky
             var i;
             while((i = attrs_pattern.exec(rv[2]))) {
@@ -182,6 +180,25 @@ function log() {
         return s.replace(/\n/g, '\\n').replace(/"/g, '\\"');
     }
 
+    function flatten_attrs(attrs) { 
+        params = [];
+
+        for(var k in attrs) {
+            var v = attrs[k];
+            
+            var match = v.match(variable_pattern);
+            if(match) {
+                v = match[1];
+            } else {
+                v = "'" + v + "'";
+            }
+            
+            params.push(k + ': ' + v);
+        }
+
+        return '{' + params.join(', ') + '}';
+    }
+
     var nodes = {
         'text': function(token) { 
             return  'context.write(\"' + token.data + '");' 
@@ -204,35 +221,24 @@ function log() {
         'start-tag': function(token) {
             var tag_name = token.data[1];
             var i;
+            var match;
 
             if(tag_name == 'function') {
                 return 'context.add_function( \'' + token.data.attrs.name + '\', function () {'
-            } else if(tag_name.substring(0, 5) == 'this:') {          
+            } else if((match = tag_name.match(/([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/))) {
                 // FIXME object scoping rules
 
-                params = [];
-
-                for(var k in token.data.attrs) {
-                    var v = token.data.attrs[k];
-
-                    var match = v.match(variable_pattern);
-                    if(match) {
-                        v = match[1];
-                    } else {
-                        v = "'" + v + "'";
-                    }
-
-                    params.push(k + ': ' + v);
-                }
-                
-                var arg = '{' + params.join(', ') + '}';
-                return tag_name.substring(5) + '(' + arg + ');';
+                var namespace = match[1];
+                var method = match[2];
+                name = namespace + '.' + method;
+                var arg = flatten_attrs(token.data.attrs);
+                return 'console.log(this); ' + name + '(' + arg + ');';
             }
         }, 
         'end-tag': function(token) {
             var tag_name = token.data[1];
             if(tag_name == 'function') { 
-                return '}'
+                return '});'
             }             
         }
     }
@@ -272,7 +278,7 @@ var test =
     "  console.log('!!! in a block');\n"          +
     "  console.log(context);\n"                   +
     "%>\n"                                        +
-    "<%function name=\"foo()\">"                  +
+    "<%function name=\"foo\">"                    +
     "!!! in foo"                                  +
     "${console.log(arguments)}"                   +
     "</%function>"                                +
@@ -283,7 +289,7 @@ var test =
     "  <td>${people[i].email}</td>\n"             +
     "</tr>\n"                                     +
     "%endfor\n"                                   +
-    "${foo(1,2,3,'blah')}\n"                      +
+    "${this.foo(1,2,3,'blah')}\n"                 +
     "------------------------------\n"            +
     "<%this:foo bar=\"1\" qux=\"${context}\"/>";
 
