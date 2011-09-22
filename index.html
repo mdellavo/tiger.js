@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15">
+    <title>Tiger.js Javascript Templating Library</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" src="tiger.js"></script>
+  </head>
+  <body>
+    <h1>Tiger.js Javascript Templating Library</h1>
+    
+    <h2>Template</h2>
+    <pre>
+      <code id="template">
+      </code>
+    </pre>
+
+    <h2>Output</h2>
+
+    <div id="output">
+    </div>
+
+    <script type="text/tiger-template" id="test">
+      x is <stong>${x}</strong>
+      %if(x%2 == 0)
+      x is even
+      %else
+      x is odd
+      %endif
+      <%
+        console.log('!!! in a block');
+        console.log(context);
+        function bar() { return 'bar!!!'; }
+      %>
+      <%function name=\"foo\">
+      !!! in foo
+      ${console.log(arguments)}
+      ${console.log(context)}
+      </%function>
+      %for(var i=0; i<people.length; i++)
+      <tr class=\"${ (i%2) ? 'odd' : 'even'}\">
+        <td>${people[i].first}</td>
+        <td>${people[i].last}</td>
+        <td>${people[i].email}</td>
+      </tr>
+      %endfor
+      ${bar(1,2,3,'blah')}
+      ------------------------------
+      <%this:foo bar=\"1\" qux=\"${context}\"/>;
+    </script>
+    <script type="text/javascript">
+
+      function htmlEncode(value){
+        return $('<div/>').text(value).html();
+      }
+
+      function htmlDecode(value){
+        return $('<div/>').html(value).text();
+      }
+      var data = {
+          x: 123, 
+      
+          people: [
+              {first: 'John', last: 'Doe', email: 'john.doe@example.com'},
+              {first: 'Jane', last: 'Doe', email: 'jane.doe@example.com'},
+              {first: 'Alice', last: 'Smith', email: 'asmith@example.com'},
+              {first: 'Bob', last: 'Jones', email: 'bjsones@example.com'}
+          ]
+      };
+      
+      var template = $('#test').html();
+      $('#template').html(htmlEncode(template));
+
+      var tmpl = tiger(htmlDecode(template));
+      console.log(tmpl);
+
+      var text = tmpl.render(data);      
+      $('#output').html(text)
+
+    </script>
+
+    <!-- hhmts start -->Last modified: Thu Sep 22 09:27:49 EDT 2011 <!-- hhmts end -->
+  </body>
+</html>

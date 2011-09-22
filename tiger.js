@@ -15,20 +15,24 @@
 // -----------------------------------------------------------------------------
 
 
-function repeat(c, n) {
-    return Array(n).join(c)
-}
-
-function section(s) {
-    var bar = repeat('-', 80 - (s.length + 1));
-    console.log("\n" + s + ' ' + bar + "\n");
-}
-
-function log() {
-    console.log.apply(console, arguments);
-}
-
 (function() {
+
+    var DEBUG = true;
+
+    function repeat(c, n) {
+        return Array(n).join(c)
+    }
+
+    function section(s) {
+        var bar = repeat('-', 80 - (s.length + 1));
+        if(DEBUG)
+            console.log("\n" + s + ' ' + bar + "\n");
+    }
+
+    function log() {
+        if(DEBUG)
+            console.log.apply(console, arguments);
+    }
    
     function Context(locals) {
         this.buffer = [];
@@ -199,6 +203,10 @@ function log() {
         return '{' + params.join(', ') + '}';
     }
 
+    function load(uri, callback) {
+        
+    }
+
     var nodes = {
         'text': function(token) { 
             return  'context.write(\"' + token.data + '");' 
@@ -225,14 +233,14 @@ function log() {
 
             if(tag_name == 'function') {
                 return 'context.add_function( \'' + token.data.attrs.name + '\', function () {'
+            } else if(tag_name == 'namespace') {
+                
             } else if((match = tag_name.match(/([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/))) {
-                // FIXME object scoping rules
-
                 var namespace = match[1];
                 var method = match[2];
                 name = namespace + '.' + method;
                 var arg = flatten_attrs(token.data.attrs);
-                return 'console.log(this); ' + name + '(' + arg + ');';
+                return name + '(' + arg + ');';
             }
         }, 
         'end-tag': function(token) {
@@ -261,59 +269,8 @@ function log() {
         return new Template(body);
     }
     
-    this.tiger = function(tmpl) {
+    window.tiger = function(tmpl) {
         return compile(tokenize(tmpl));
     }
     
 })();
-
-var test = 
-    "x is <stong>${x}</strong>\n"                 +
-    "%if(x%2 == 0)\n"                             +
-    "x is even"                                   +
-    "%else\n"                                     +
-    "x is odd"                                    +
-    "%endif\n"                                    +
-    "<%\n"                                        +
-    "  console.log('!!! in a block');\n"          +
-    "  console.log(context);\n"                   +
-    "  function bar() { return 'bar!!!'; }\n"     +
-    "%>\n"                                        +
-    "<%function name=\"foo\">"                    +
-    "!!! in foo"                                  +
-    "${console.log(arguments)}"                   +
-    "</%function>"                                +
-    "%for(var i=0; i<people.length; i++)\n"       +
-    "<tr class=\"${ (i%2) ? 'odd' : 'even'}\">\n" +
-    "  <td>${people[i].first}</td>\n"             +
-    "  <td>${people[i].last}</td>\n"              +
-    "  <td>${people[i].email}</td>\n"             +
-    "</tr>\n"                                     +
-    "%endfor\n"                                   +
-    "${bar(1,2,3,'blah')}\n"                      +
-    "------------------------------\n"            +
-    "<%this:foo bar=\"1\" qux=\"${context}\"/>";
-
-section("Source");
-log(test);
-
-var data = {
-    x: 123, 
-
-    people: [
-        {first: 'John', last: 'Doe', email: 'john.doe@example.com'},
-        {first: 'Jane', last: 'Doe', email: 'jane.doe@example.com'},
-        {first: 'Alice', last: 'Smith', email: 'asmith@example.com'},
-        {first: 'Bob', last: 'Jones', email: 'bjsones@example.com'}
-    ]
-};
-
-section("Data");
-log(data);
-
-var tmpl = tiger(test);
-var text = tmpl.render(data);
-
-section("Output");
-log(text);
-
