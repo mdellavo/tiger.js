@@ -33,11 +33,16 @@ function log() {
     function Context(locals) {
         this.buffer = [];
         this.locals = locals;
+        this.namespaces = {'this': {}};
     }
 
     Context.prototype.write = function(s) {
         this.buffer.push(s);
     }    
+
+    Context.prototype.add_function = function(name, f) {
+        this.namespaces['this'][name] = f;
+    }
 
     Context.prototype.get = function() {
         return this.buffer.join('');
@@ -200,17 +205,16 @@ function log() {
             var tag_name = token.data[1];
             var i;
 
-            if(tag_name == 'function') { 
-                return 'function ' + token.data.attrs.name + '{'
-
+            if(tag_name == 'function') {
+                return 'context.add_function( \'' + token.data.attrs.name + '\', function () {'
             } else if(tag_name.substring(0, 5) == 'this:') {          
                 // FIXME object scoping rules
 
-                // FIXME handle variables
                 params = [];
 
                 for(var k in token.data.attrs) {
                     var v = token.data.attrs[k];
+
                     var match = v.match(variable_pattern);
                     if(match) {
                         v = match[1];
@@ -280,6 +284,7 @@ var test =
     "</tr>\n"                                     +
     "%endfor\n"                                   +
     "${foo(1,2,3,'blah')}\n"                      +
+    "------------------------------\n"            +
     "<%this:foo bar=\"1\" qux=\"${context}\"/>";
 
 section("Source");
