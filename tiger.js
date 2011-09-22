@@ -38,7 +38,7 @@ function log() {
     }
 
     Context.prototype.write = function(s) {
-        this.buffer.push(s);
+        this.buffer.push(s || '');
     }    
 
     Context.prototype.add_function = function(name, f) {
@@ -277,6 +277,7 @@ var test =
     "<%\n"                                        +
     "  console.log('!!! in a block');\n"          +
     "  console.log(context);\n"                   +
+    "  function bar() { return 'bar!!!'; }\n"     +
     "%>\n"                                        +
     "<%function name=\"foo\">"                    +
     "!!! in foo"                                  +
@@ -289,7 +290,7 @@ var test =
     "  <td>${people[i].email}</td>\n"             +
     "</tr>\n"                                     +
     "%endfor\n"                                   +
-    "${this.foo(1,2,3,'blah')}\n"                 +
+    "${bar(1,2,3,'blah')}\n"                      +
     "------------------------------\n"            +
     "<%this:foo bar=\"1\" qux=\"${context}\"/>";
 
