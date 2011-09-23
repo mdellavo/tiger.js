@@ -106,6 +106,8 @@
         return rv;
     }
 
+    var text_pattern = /^((.|\n)*?)((?=\${)|(?=<\/?%)|(?=%\w+)|$)/;
+
     var tag_open_pattern = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
     var tag_close_pattern = /^\<\/%[\t ]*(.+?)[\t ]*>/;
     var variable_pattern = /^\${([^}]*)}/;
@@ -135,17 +137,12 @@
         {name: 'end-tag', match: match_regex(tag_close_pattern)},
         {name: 'end-control', match: match_regex(/^%end([^\n]+)\n/)},
         {name: 'else', match: match_regex(/^%else\n/)},
-        {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)}
+        {name: 'start-control', match: match_regex(/^%([^\n]+)\n/)},
+        {name: 'text', match: match_regex(text_pattern)}
     ];
-
-    function consume(consumed) {
-        return {name: 'text', data: clean_text(consumed.join(''))};
-    } 
 
     function tokenize(input) {        
         var rv = [];        
-        var consumed = [];
-        
         while(input) {
 
             var token, pattern;
@@ -156,26 +153,17 @@
                     break;
             }
             
-            var pos;
-            if(token) {
-                pos = token[0].length;
-
-                if(consumed.length>0)
-                    rv.push(consume(consumed));
-
-                consumed = [];
-
-                rv.push({name: pattern.name, data: token});
-            } else {
-                consumed.push(input[0]);
-                pos = 1;
+            if(!token) {
+                log('Parse error')
+                log(rv);
+                log(input)
+                return [];
             }
 
+            pos = token[0].length;
+            rv.push({name: pattern.name, data: token});
             input = input.substring(pos);
         }
-
-        if(consumed.length>0)
-            rv.push(consume(consumed));
 
         return rv;
     }
@@ -209,7 +197,7 @@
 
     var nodes = {
         'text': function(token) { 
-            return  'context.write(\"' + token.data + '");' 
+            return  'context.write(\"' + clean_text(token.data[1]) + '");' 
         },
         'variable': function(token) {
             return 'context.write(' + token.data[1] + ');' 
@@ -269,8 +257,9 @@
         return new Template(body);
     }
     
-    window.tiger = function(tmpl) {
+    this.tiger = function(tmpl) {
         return compile(tokenize(tmpl));
     }
+
     
 })();

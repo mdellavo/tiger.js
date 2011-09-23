@@ -3,50 +3,106 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15">
     <title>Tiger.js Javascript Templating Library</title>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="static/css/blueprint/screen.css" type="text/css" media="screen, projection"/>
+    <link rel="stylesheet" href="static/css/blueprint/print.css" type="text/css" media="print"/> 
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="static/css/blueprint/ie.css" type="text/css" media="screen, projection"/>
+    <![endif]-->
+    <link rel="stylesheet" href="static/css/blueprint/buttons.css" type="text/css" media="screen, projection"/> 
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>    
     <script type="text/javascript" src="tiger.js"></script>
   </head>
   <body>
+
     <h1>Tiger.js Javascript Templating Library</h1>
-    
-    <h2>Template</h2>
-    <pre>
-      <code id="template">
-      </code>
-    </pre>
 
-    <h2>Output</h2>
+    <div class="container">
 
-    <div id="output">
+      <div class="span-14">
+        <h2>Template</h2>
+        <textarea id="template" class="span-14">
+<p>x is <stong>${x}</strong></p>
+
+<p>
+  %if(x%2 == 0)
+  x is even
+  %else
+  x is odd
+  %endif
+</p>
+
+<%
+  console.log('!!! in a block');
+  console.log(context);
+  function bar() { return 'bar!!!'; }
+%>
+
+<%function name="foo">
+!!! in foo
+${console.log(arguments)}
+${console.log(context)}
+</%function>
+
+
+<table>
+  <tr>
+    <th>First Name</th>
+    <th>Last Name</th>
+    <th>Email</th>
+  </tr>
+
+  %for(var i=0; i<people.length; i++)
+  <tr class="${ (i%2) ? 'odd' : 'even'}">
+    <td>${people[i].first}</td>
+    <td>${people[i].last}</td>
+    <td><a href="mailto:${people[i].email}">${people[i].email}</a></td>
+  </tr>
+  %endfor
+</table>
+
+<p> 
+  ${bar(1,2,3,'blah')}<br/>
+  ------------------------------<br/>
+  <%this:foo bar="1" qux="${context}"/><br/>
+</p>
+        </textarea>
+      </div>
+      <div class="span-10 last">
+        
+        <h2>Data</h2>
+        <textarea id="data" class="span-10">
+{
+  x: 123, 
+      
+  people: [ { first: 'John', 
+              last: 'Doe', 
+              email: 'john.doe@example.com' },
+            { first: 'Jane', 
+              last: 'Doe', 
+              email: 'jane.doe@example.com' },
+            { first: 'Alice', 
+              last: 'Smith', 
+              email: 'asmith@example.com' },
+            { first: 'Bob', 
+              last: 'Jones',
+              email: 'bjsones@example.com' } ]
+}
+        </textarea>
+
+        <button class="positive large" id="go" style="float:right;">
+          <strong>Render</strong>
+        </button>
+
+      </div>
+      <h2>Output</h2>
+
+        <div id="output">
+        </div>
+
     </div>
 
     <script type="text/tiger-template" id="test">
-      x is <stong>${x}</strong>
-      %if(x%2 == 0)
-      x is even
-      %else
-      x is odd
-      %endif
-      <%
-        console.log('!!! in a block');
-        console.log(context);
-        function bar() { return 'bar!!!'; }
-      %>
-      <%function name=\"foo\">
-      !!! in foo
-      ${console.log(arguments)}
-      ${console.log(context)}
-      </%function>
-      %for(var i=0; i<people.length; i++)
-      <tr class=\"${ (i%2) ? 'odd' : 'even'}\">
-        <td>${people[i].first}</td>
-        <td>${people[i].last}</td>
-        <td>${people[i].email}</td>
-      </tr>
-      %endfor
-      ${bar(1,2,3,'blah')}
-      ------------------------------
-      <%this:foo bar=\"1\" qux=\"${context}\"/>;
     </script>
     <script type="text/javascript">
 
@@ -57,28 +113,22 @@
       function htmlDecode(value){
         return $('<div/>').html(value).text();
       }
-      var data = {
-          x: 123, 
-      
-          people: [
-              {first: 'John', last: 'Doe', email: 'john.doe@example.com'},
-              {first: 'Jane', last: 'Doe', email: 'jane.doe@example.com'},
-              {first: 'Alice', last: 'Smith', email: 'asmith@example.com'},
-              {first: 'Bob', last: 'Jones', email: 'bjsones@example.com'}
-          ]
-      };
-      
-      var template = $('#test').html();
-      $('#template').html(htmlEncode(template));
 
-      var tmpl = tiger(htmlDecode(template));
-      console.log(tmpl);
+      $('#go').click(function() {
+      
+        var template = $('#template').val();
+        var data = eval('x=' + $('#data').val());
 
-      var text = tmpl.render(data);      
-      $('#output').html(text)
+        var tmpl = tiger(template);
+        if(tmpl) {        
+          $('#output').html(tmpl.render(data));
+        }
+
+        return false;
+      });
+      
 
     </script>
 
-    <!-- hhmts start -->Last modified: Thu Sep 22 09:27:49 EDT 2011 <!-- hhmts end -->
   </body>
 </html>
