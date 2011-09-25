@@ -14,10 +14,17 @@
 //  
 // -----------------------------------------------------------------------------
 
+var global = this;
 
 (function() {
 
     var DEBUG = true;
+
+    if(!global['console']) {
+        global.console = {
+            log: function(s) { System.err.println((s || '').toString()) }
+        }
+    }
 
     function repeat(c, n) {
         return Array(n).join(c)
@@ -30,27 +37,58 @@
     }
 
     function log() {
-        if(DEBUG)
+        if(DEBUG) {           
             console.log.apply(console, arguments);
+        }
     }
    
     function Context(locals) {
-        this.buffer = [];
+        this.buffers = [[]];
+        this.call_stack = [];
         this.locals = locals;
         this.this_ = {};
         this.namespaces = {};
     }
 
+    Context.prototype.peek_buffer = function() {
+        return this.buffers[this.buffers.length - 1];
+    }
+
     Context.prototype.write = function(s) {
-        this.buffer.push(s || '');
+        return this.peek_buffer().push(s || '');
     }    
+
+    Context.prototype.get = function() {
+        return this.peek_buffer().join('');
+    }
+
+    Context.prototype.push_buffer = function() {
+        return this.buffers.push([]);
+    }
+
+    Context.prototype.pop_buffer = function() {
+        var rv = this.get();
+        this.buffers.pop();
+        return rv;
+    }
 
     Context.prototype.add_function = function(name, f) {
         this.this_[name] = f;
     }
 
-    Context.prototype.get = function() {
-        return this.buffer.join('');
+    Context.prototype.invoke = function(func, attrs, body) {
+        return func.call(this.this_, attrs, body);
+    }
+
+    Context.prototype.push_call = function(func, attrs) {
+        var body = this.push_buffer();
+        this.call_stack.push({'func': func, 'attrs': attrs});
+    }
+
+    Context.prototype.pop_call = function() {
+        var body = this.pop_buffer();
+        var call = this.call_stack.pop();
+        this.invoke(call.func, call.attrs, body);
     }
 
     function Template(body) {
@@ -74,9 +112,11 @@
         section("Rendering");
         try {
             this.impl.call(context.this_, context);
-        } catch(err) {
-            section("Error");
-            log(err);
+        } catch(e) {          
+            var err = e.constructor('Error in Evaled Script: ' + e.message);
+            // +3 because `err` has the line number of the `eval` line plus two.
+            err.lineNumber = e.lineNumber - err.lineNumber + 3;
+            throw err;
         }
 
         return context.get();
@@ -107,16 +147,17 @@
     }
 
     var text_pattern = /^((.|\n)*?)((?=\${)|(?=<\/?%)|(?=%\w+)|$)/;
-
     var tag_open_pattern = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
     var tag_close_pattern = /^\<\/%[\t ]*(.+?)[\t ]*>/;
     var variable_pattern = /^\${([^}]*)}/;
+    var name_pattern = /([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/;
     var attrs_pattern = /\s*(\w+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\")/g;
     var match_regex_tag_open = match_regex(tag_open_pattern);
 
+
     function match_open_tag(s) {
         var rv = match_regex_tag_open(s);
-        if(rv) {
+        if(rv) {          
             rv.attrs = {};
             // FIXME this seems hacky
             var i;
@@ -125,6 +166,8 @@
                 var v = i[3];
                 rv.attrs[k] = v;
             }
+
+            rv.inline = (rv[3] == '/');
         }
 
         return rv;        
@@ -220,22 +263,25 @@
             var match;
 
             if(tag_name == 'function') {
-                return 'context.add_function( \'' + token.data.attrs.name + '\', function () {'
+                return 'context.add_function( \'' + token.data.attrs.name + '\', function (attrs, body) {'
             } else if(tag_name == 'namespace') {
                 
-            } else if((match = tag_name.match(/([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/))) {
-                var namespace = match[1];
-                var method = match[2];
-                name = namespace + '.' + method;
-                var arg = flatten_attrs(token.data.attrs);
-                return name + '(' + arg + ');';
+            } else if((match = tag_name.match(name_pattern))) {
+                var name = match[1] + '.' + match[2];
+                var attrs = flatten_attrs(token.data.attrs);                
+                var method = token.data.inline ? 'invoke'  : 'push_call'
+
+                return 'context.' + method + '(' + name + ', ' + attrs + ');';
             }
         }, 
         'end-tag': function(token) {
             var tag_name = token.data[1];
             if(tag_name == 'function') { 
                 return '});'
-            }             
+            } else if((match = tag_name.match(name_pattern))) {
+                // FIXME check balance, add some assertions
+                return 'context.pop_call();';
+            }
         }
     }
 
@@ -252,7 +298,7 @@
             fragments.push(fragment);
         }
 
-        var body = fragments.join("\n");
+        var body = fragments.join("\n    ");
 
         return new Template(body);
     }

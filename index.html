@@ -10,38 +10,42 @@
     <link rel="stylesheet" href="static/css/blueprint/ie.css" type="text/css" media="screen, projection"/>
     <![endif]-->
     <link rel="stylesheet" href="static/css/blueprint/buttons.css" type="text/css" media="screen, projection"/> 
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>    
-    <script type="text/javascript" src="tiger.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" src="json2.js"></script>
+    <script type="text/javascript" src="tiger.min.js"></script>
+    <script type="text/javascript" src="data.js"></script>
+    <script type="text/javascript" src="index.js"></script>
   </head>
   <body>
+
+    
 
     <h1>Tiger.js Javascript Templating Library</h1>
 
     <div class="container">
 
-      <div class="span-14">
-        <h2>Template</h2>
-        <textarea id="template" class="span-14">
-<p>x is <stong>${x}</strong></p>
+      <h2>Example</h2>
 
-<p>
+      <div class="span-14">
+        <h3>Template</h3>
+        <textarea id="template" class="span-14"><p>
+  x is <strong>${x}</strong>, 
+  x is <strong>
   %if(x%2 == 0)
-  x is even
+  even
   %else
-  x is odd
+  odd
   %endif
+  </strong>
 </p>
 
 <%
   console.log('!!! in a block');
-  console.log(context);
   function bar() { return 'bar!!!'; }
 %>
 
 <%function name="foo">
 !!! in foo
-${console.log(arguments)}
-${console.log(context)}
 </%function>
 
 
@@ -62,32 +66,59 @@ ${console.log(context)}
 </table>
 
 <p> 
-  ${bar(1,2,3,'blah')}<br/>
-  ------------------------------<br/>
-  <%this:foo bar="1" qux="${context}"/><br/>
+  ${bar(1,2,3,'blah')}
+  <hr/>
+  <%this:foo bar="1" qux="${context}"/>
 </p>
-        </textarea>
+</textarea>
       </div>
       <div class="span-10 last">
         
-        <h2>Data</h2>
+        <h3>Data</h3>
         <textarea id="data" class="span-10">
-{
-  x: 123, 
-      
-  people: [ { first: 'John', 
-              last: 'Doe', 
-              email: 'john.doe@example.com' },
-            { first: 'Jane', 
-              last: 'Doe', 
-              email: 'jane.doe@example.com' },
-            { first: 'Alice', 
-              last: 'Smith', 
-              email: 'asmith@example.com' },
-            { first: 'Bob', 
-              last: 'Jones',
-              email: 'bjsones@example.com' } ]
-}
+          <p>
+  x is <strong>${x}</strong>, 
+  x is <strong>
+  %if(x%2 == 0)
+  even
+  %else
+  odd
+  %endif
+  </strong>
+</p>
+
+<%
+  console.log('!!! in a block');
+  function bar() { return 'bar!!!'; }
+%>
+
+<%function name="foo">
+!!! in foo
+</%function>
+
+
+<table>
+  <tr>
+    <th>First Name</th>
+    <th>Last Name</th>
+    <th>Email</th>
+  </tr>
+
+  %for(var i=0; i<people.length; i++)
+  <tr class="${ (i%2) ? 'odd' : 'even'}">
+    <td>${people[i].first}</td>
+    <td>${people[i].last}</td>
+    <td><a href="mailto:${people[i].email}">${people[i].email}</a></td>
+  </tr>
+  %endfor
+</table>
+
+<p> 
+  ${bar(1,2,3,'blah')}
+  <hr/>
+  <%this:foo bar="1" qux="${context}"/>
+</p>
+
         </textarea>
 
         <button class="positive large" id="go" style="float:right;">
@@ -95,40 +126,173 @@ ${console.log(context)}
         </button>
 
       </div>
-      <h2>Output</h2>
+      <h3>Output</h3>
 
-        <div id="output">
-        </div>
+      <div id="output">
+      </div>
 
+      <div class="span-24 last">
+        <h2>Documentation</h2>
+
+        <p>
+          Tiger.js is a javascript rip-off of the Mako Templating
+          Library.
+        </p>
+
+        
+    <div class="span-14">
+      <h3>Environment</h3>
+    
+      <p>
+          Templates are executed inside of two contexts, namespace and
+          locals.  Namespace contains additional objects "mounted" to
+          the template's scope.  Locals contains the variable
+          context passed to the template's render function and availble
+          in template scope.  
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
     </div>
 
-    <script type="text/tiger-template" id="test">
-    </script>
-    <script type="text/javascript">
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
 
-      function htmlEncode(value){
-        return $('<div/>').text(value).html();
-      }
+    <hr class="space clear"/>
+    
 
-      function htmlDecode(value){
-        return $('<div/>').html(value).text();
-      }
+        
+    <div class="span-14">
+      <h3>Context</h3>
+    
+      <p>
+          The local scope contains the templates' context variable
+          accessible as "context".  The context contain's the currently
+          rendering template's state.  Locals, namespace, this are
+          contained in the context object.  The context object provides
+          a .write() method to append a chunk of text to the template's
+          output.  The .get() method will return the rendered
+          template.
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
 
-      $('#go').click(function() {
-      
-        var template = $('#template').val();
-        var data = eval('x=' + $('#data').val());
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
 
-        var tmpl = tiger(template);
-        if(tmpl) {        
-          $('#output').html(tmpl.render(data));
-        }
+    <hr class="space clear"/>
+    
 
-        return false;
-      });
-      
+        
+    <div class="span-14">
+      <h3>This</h3>
+    
+      <p>
+          Templates are called with a special "this" variable contained in
+          the context.  When functions are defined they will be inserted
+          into the template's "this" context and available as methods of
+          the template.
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
 
-    </script>
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
 
+    <hr class="space clear"/>
+    
+
+        
+    <div class="span-14">
+      <h3>Expressions</h3>
+    
+      <p>
+          Expressions are marked by . Expressions are inserted
+          directly into the generated code.
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
+
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
+
+    <hr class="space clear"/>
+    
+        
+        
+    <div class="span-14">
+      <h3>Blocks</h3>
+    
+      <p>
+          Blocks are denoted by &lt;% ... %&gt; tags.  Blocks are inserted
+          directly into the generated code.
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
+
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="span-14">
+      <h3>Control Structures</h3>
+    
+      <p>  
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
+
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="span-14">
+      <h3>Functions</h3>
+    
+      <p>  
+        </p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
+
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+      </div>      
+    </div>
   </body>
 </html>

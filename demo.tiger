@@ -1,0 +1,42 @@
+<p>
+  x is <strong>${x}</strong>, 
+  x is <strong>
+  %if(x%2 == 0)
+  even
+  %else
+  odd
+  %endif
+  </strong>
+</p>
+
+<%
+  console.log('!!! in a block');
+  function bar() { return 'bar!!!'; }
+%>
+
+<%function name="foo">
+!!! in foo
+</%function>
+
+
+<table>
+  <tr>
+    <th>First Name</th>
+    <th>Last Name</th>
+    <th>Email</th>
+  </tr>
+
+  %for(var i=0; i<people.length; i++)
+  <tr class="${ (i%2) ? 'odd' : 'even'}">
+    <td>${people[i].first}</td>
+    <td>${people[i].last}</td>
+    <td><a href="mailto:${people[i].email}">${people[i].email}</a></td>
+  </tr>
+  %endfor
+</table>
+
+<p> 
+  ${bar(1,2,3,'blah')}
+  <hr/>
+  <%this:foo bar="1" qux="${context}"/>
+</p>

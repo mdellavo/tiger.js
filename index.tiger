@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15">
+    <title>Tiger.js Javascript Templating Library</title>
+    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="static/css/blueprint/screen.css" type="text/css" media="screen, projection"/>
+    <link rel="stylesheet" href="static/css/blueprint/print.css" type="text/css" media="print"/> 
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="static/css/blueprint/ie.css" type="text/css" media="screen, projection"/>
+    <![endif]-->
+    <link rel="stylesheet" href="static/css/blueprint/buttons.css" type="text/css" media="screen, projection"/> 
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" src="json2.js"></script>
+    <script type="text/javascript" src="tiger.min.js"></script>
+    <script type="text/javascript" src="data.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+  </head>
+  <body>
+
+    <%function name="section">
+    <div class="span-14">
+      <h3>${attrs.name}</h3>
+    
+      <p>${body}</p>    
+    </div>
+    
+    <div class="span-5">
+      <h4>Example</h4>
+    </div>
+
+    <div class="span-5 last">
+      <h4>Output</h4>
+    </div>
+
+    <hr class="space clear"/>
+    </%function>
+
+    <h1>Tiger.js Javascript Templating Library</h1>
+
+    <div class="container">
+
+      <h2>Example</h2>
+
+      <div class="span-14">
+        <h3>Template</h3>
+        <textarea id="template" class="span-14">${readFile('demo.tiger')}</textarea>
+      </div>
+      <div class="span-10 last">
+        
+        <h3>Data</h3>
+        <textarea id="data" class="span-10">
+          ${readFile('demo.tiger')}
+        </textarea>
+
+        <button class="positive large" id="go" style="float:right;">
+          <strong>Render</strong>
+        </button>
+
+      </div>
+      <h3>Output</h3>
+
+      <div id="output">
+      </div>
+
+      <div class="span-24 last">
+        <h2>Documentation</h2>
+
+        <p>
+          Tiger.js is a javascript rip-off of the Mako Templating
+          Library.
+        </p>
+
+        <%this:section name="Environment">
+          Templates are executed inside of two contexts, namespace and
+          locals.  Namespace contains additional objects "mounted" to
+          the template's scope.  Locals contains the variable
+          context passed to the template's render function and availble
+          in template scope.  
+        </%this:section>
+
+        <%this:section name="Context">
+          The local scope contains the templates' context variable
+          accessible as "context".  The context contain's the currently
+          rendering template's state.  Locals, namespace, this are
+          contained in the context object.  The context object provides
+          a .write() method to append a chunk of text to the template's
+          output.  The .get() method will return the rendered
+          template.
+        </%this:section>
+
+        <%this:section name="This">
+          Templates are called with a special "this" variable contained in
+          the context.  When functions are defined they will be inserted
+          into the template's "this" context and available as methods of
+          the template.
+        </%this:section>
+
+        <%this:section name="Expressions">
+          Expressions are marked by ${}. Expressions are inserted
+          directly into the generated code.
+        </%this:section>
+        
+        <%this:section name="Blocks">
+          Blocks are denoted by &lt;% ... %&gt; tags.  Blocks are inserted
+          directly into the generated code.
+        </%this:section>
+
+        <%this:section name="Control Structures">  
+        </%this:section>
+
+        <%this:section name="Functions">  
+        </%this:section>
+
+      </div>      
+    </div>
+  </body>
+</html>
