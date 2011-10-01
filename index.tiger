@@ -3,44 +3,49 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15">
     <title>Tiger.js Javascript Templating Library</title>
-    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
+    <link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Allan:700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="static/css/blueprint/screen.css" type="text/css" media="screen, projection"/>
     <link rel="stylesheet" href="static/css/blueprint/print.css" type="text/css" media="print"/> 
     <!--[if lt IE 8]>
     <link rel="stylesheet" href="static/css/blueprint/ie.css" type="text/css" media="screen, projection"/>
     <![endif]-->
     <link rel="stylesheet" href="static/css/blueprint/buttons.css" type="text/css" media="screen, projection"/> 
+    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
     <script type="text/javascript" src="json2.js"></script>
-    <script type="text/javascript" src="tiger.min.js"></script>
+    <script type="text/javascript" src="tiger.js"></script>
     <script type="text/javascript" src="data.js"></script>
     <script type="text/javascript" src="index.js"></script>
   </head>
   <body>
 
     <%function name="section">
-    <div class="span-14">
-      <h3>${attrs.name}</h3>
-    
-      <p>${body}</p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">${attrs.name}</h3>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+        <p class="body large alt">${body}</p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text"><%this:example /></textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     </%function>
 
-    <h1>Tiger.js Javascript Templating Library</h1>
-
     <div class="container">
 
-      <h2>Example</h2>
+      <h1 class="prepend-top">Tiger.js Javascript Templating Library</h1>
+
+      <h2>Demo</h2>
 
       <div class="span-14">
         <h3>Template</h3>
@@ -71,7 +76,28 @@
           Library.
         </p>
 
-        <%this:section name="Environment">
+        <%this:section name="Basic Usage">
+
+        <%function name="example">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </%function>
+
+        </%this:section>
+
+        <%this:section name="Template Objects">
+        </%this:section>
+
+        <%this:section name="Building Templates">
+        </%this:section>
+
+        <%this:section name="Rendering Templates">
+        </%this:section>
+
+        <%this:section name="The Sandbox">
+        </%this:section>
+
+        <%this:section name="The Environment">
           Templates are executed inside of two contexts, namespace and
           locals.  Namespace contains additional objects "mounted" to
           the template's scope.  Locals contains the variable
@@ -79,7 +105,7 @@
           in template scope.  
         </%this:section>
 
-        <%this:section name="Context">
+        <%this:section name="Render Context">
           The local scope contains the templates' context variable
           accessible as "context".  The context contain's the currently
           rendering template's state.  Locals, namespace, this are
@@ -89,7 +115,7 @@
           template.
         </%this:section>
 
-        <%this:section name="This">
+        <%this:section name="Template Context / This">
           Templates are called with a special "this" variable contained in
           the context.  When functions are defined they will be inserted
           into the template's "this" context and available as methods of

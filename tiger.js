@@ -4,8 +4,10 @@
 // Mako-like template preprocessor for javascript
 //
 //
-// FIXME switch to jison for parsing
-//
+// Parsing
+//   parsing is very dumb and is really just serial tokenization. a
+//   proper parser, ast and recusive generation is probably needed
+//   
 // Object model for templates
 //   templates will be applied to an object for execution
 //   functions will insert themselves into current context
@@ -20,9 +22,18 @@ var global = this;
 
     var DEBUG = true;
 
+    var text_pattern = /^((.|\n)*?)((?=\${)|(?=<\/?%)|(?=%\w+)|$)/;
+    var tag_open_pattern = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
+    var tag_close_pattern = /^\<\/%[\t ]*(.+?)[\t ]*>/;
+    var expression_pattern = /^\${([^}]*)}/;
+    var name_pattern = /([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/;
+    var attrs_pattern = /\s*(\w+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\")/g;
+
     if(!global['console']) {
         global.console = {
-            log: function(s) { System.err.println((s || '').toString()) }
+            log: function(o) {
+                System.err.println(JSON.stringify(o)); 
+            }
         }
     }
 
@@ -41,6 +52,16 @@ var global = this;
             console.log.apply(console, arguments);
         }
     }
+
+    function replace(fmt) {
+        var params = arguments;
+
+        function replacer(str, position, offset, s) {
+            return String(params[Number(position)+1] || '');
+        }
+
+        return fmt.replace(/{(\d+)}/g, replacer);
+    } 
    
     function Context(locals) {
         this.buffers = [[]];
@@ -48,15 +69,41 @@ var global = this;
         this.locals = locals;
         this.this_ = {};
         this.namespaces = {};
+
+        // Built-In Filters
+        //
+        // u - url escaping
+        // h - html escaping
+        // x - xml escaping
+        // trim - whitespace trimming
+        
+        this.filters = {
+            'h': function(s) { return s.replace(/&/g,'&amp;')
+                                       .replace(/</g,'&lt;')
+                                       .replace(/>/g,'&gt;')  },
+            'u': function(s) { return escape(s) },
+            'trim': function(s) { return s.replace(/^\s\s*/, '')
+                                          .replace(/\s\s*$/, '') }
+        }
     }
 
     Context.prototype.peek_buffer = function() {
         return this.buffers[this.buffers.length - 1];
     }
 
-    Context.prototype.write = function(s) {
-        return this.peek_buffer().push(s || '');
-    }    
+    Context.prototype.filter = function(name, s) {
+        return this.filters[name](s);
+    }
+
+    Context.prototype.write = function(s, filters) {
+        s = String(s || '').toString();
+        filters = filters || [];
+
+        for(var i=0; i<filters.length; i++)
+            s = this.filter(filters[i], s);
+
+        return this.peek_buffer().push(s.toString());
+    }
 
     Context.prototype.get = function() {
         return this.peek_buffer().join('');
@@ -72,6 +119,7 @@ var global = this;
         return rv;
     }
 
+    // FIXME need to add function scoping stack
     Context.prototype.add_function = function(name, f) {
         this.this_[name] = f;
     }
@@ -92,8 +140,8 @@ var global = this;
     }
 
     function Template(body) {
-        var sandbox = "with(context.namespaces) {\nwith(context.locals) {\n$body\n}\n}";
-        var sandboxed = sandbox.replace('$body', body);
+        var sandbox = "with(context.namespaces) {\nwith(context.locals) {\n{0}\n}\n}";
+        var sandboxed = replace(sandbox, body);
                 
         section("Sandboxed ");
         log(sandboxed)
@@ -132,6 +180,9 @@ var global = this;
         }
     }
 
+    var match_regex_tag_open = match_regex(tag_open_pattern);
+    var match_regex_expression = match_regex(expression_pattern);
+
     function match_block(s) {
         var rv = null;
         if(s.match(/^<%/)) {
@@ -139,26 +190,18 @@ var global = this;
             close = s.match(/%>/)
             if(close) {
                 rv = {0: s.substring(0, close.index + 2),
-                      1: s.substring(2, close.index)};               
+                      1: s.substring(2, close.index)};
             }
         }
 
         return rv;
     }
 
-    var text_pattern = /^((.|\n)*?)((?=\${)|(?=<\/?%)|(?=%\w+)|$)/;
-    var tag_open_pattern = /^\<%([\w\.\:]+)((?:\s+\w+|\s*=\s*|".*?"|'.*?')*)\s*(\/)?>/;
-    var tag_close_pattern = /^\<\/%[\t ]*(.+?)[\t ]*>/;
-    var variable_pattern = /^\${([^}]*)}/;
-    var name_pattern = /([a-zA-Z_]\w+)\:([a-zA-Z_]\w+)/;
-    var attrs_pattern = /\s*(\w+)\s*=\s*(?:'([^']*)'|\"([^\"]*)\")/g;
-    var match_regex_tag_open = match_regex(tag_open_pattern);
-
-
     function match_open_tag(s) {
         var rv = match_regex_tag_open(s);
         if(rv) {          
             rv.attrs = {};
+
             // FIXME this seems hacky
             var i;
             while((i = attrs_pattern.exec(rv[2]))) {
@@ -173,9 +216,22 @@ var global = this;
         return rv;        
     }
 
+    function match_expression(s) {
+        var rv = match_regex_expression(s);
+
+        if(rv) {
+            var parts = rv[1].split(/\|/);
+            rv[1] = parts[0];
+            if(parts[1]) 
+                rv[2] = parts[1].split(/, ?/);
+        }
+
+        return rv;
+    }
+
     var patterns = [
         {name: 'block', match: match_block},
-        {name: 'variable', match: match_regex(variable_pattern)},
+        {name: 'expression', match: match_expression},
         {name: 'start-tag', match: match_open_tag},
         {name: 'end-tag', match: match_regex(tag_close_pattern)},
         {name: 'end-control', match: match_regex(/^%end([^\n]+)\n/)},
@@ -212,16 +268,25 @@ var global = this;
     }
 
     function clean_text(s) {
-        return s.replace(/\n/g, '\\n').replace(/"/g, '\\"');
+        return '"' + s.replace(/\n/g, '\\n').replace(/"/g, '\\"') + '"';
+    }
+
+    function flatten_list(l) {
+        var parts  = [];
+        
+        for(var i=0; i<l.length; i++)
+            parts.push("'" + l[i] + "'");
+
+        return '[' + parts.join(', ') + ']';
     }
 
     function flatten_attrs(attrs) { 
-        params = [];
+        var params = [];
 
         for(var k in attrs) {
             var v = attrs[k];
             
-            var match = v.match(variable_pattern);
+            var match = v.match(expression_pattern);
             if(match) {
                 v = match[1];
             } else {
@@ -239,23 +304,25 @@ var global = this;
     }
 
     var nodes = {
-        'text': function(token) { 
-            return  'context.write(\"' + clean_text(token.data[1]) + '");' 
+        'text': function(token) {
+            return replace('context.write({0});', clean_text(token.data[1]));
         },
-        'variable': function(token) {
-            return 'context.write(' + token.data[1] + ');' 
+        'expression': function(token) {
+            var expr = token.data[1] || '""';
+            var filters = token.data[2] || ['h'];
+            return replace('context.write({0}, {1});', expr, flatten_list(filters));
         },
         'block': function(token) {
             return token.data[1];
         },
         'start-control': function(token) {
-            return token.data[1] + '{' 
+            return token.data[1] + '{';
         },
         'end-control': function(token) {
-            return '}' 
+            return '}';
         },
         'else': function(token) { 
-            return '} else { ' 
+            return '} else { ';
         }, 
         'start-tag': function(token) {
             var tag_name = token.data[1];
@@ -263,15 +330,23 @@ var global = this;
             var match;
 
             if(tag_name == 'function') {
-                return 'context.add_function( \'' + token.data.attrs.name + '\', function (attrs, body) {'
+
+                return replace(
+                    'context.add_function( \'{0}\', function (attrs, body) {', 
+                    token.data.attrs.name
+                );
+
             } else if(tag_name == 'namespace') {
+
                 
+
             } else if((match = tag_name.match(name_pattern))) {
+
                 var name = match[1] + '.' + match[2];
                 var attrs = flatten_attrs(token.data.attrs);                
                 var method = token.data.inline ? 'invoke'  : 'push_call'
 
-                return 'context.' + method + '(' + name + ', ' + attrs + ');';
+                return replace('context.{0}({1}, {2});', method, name, attrs);
             }
         }, 
         'end-tag': function(token) {
@@ -306,6 +381,9 @@ var global = this;
     this.tiger = function(tmpl) {
         return compile(tokenize(tmpl));
     }
-
     
+    if(global['$']) {
+        // FIXME add jquery helpers
+    }
+
 })();

@@ -36,7 +36,7 @@
 </table>
 
 <p> 
-  ${bar(1,2,3,'blah')}
+  ${bar(1,2,3,'blah')|u,h,trim}
   <hr/>
   <%this:foo bar="1" qux="${context}"/>
 </p>

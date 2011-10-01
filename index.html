@@ -3,16 +3,18 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15">
     <title>Tiger.js Javascript Templating Library</title>
-    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
+    <link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Allan:700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="static/css/blueprint/screen.css" type="text/css" media="screen, projection"/>
     <link rel="stylesheet" href="static/css/blueprint/print.css" type="text/css" media="print"/> 
     <!--[if lt IE 8]>
     <link rel="stylesheet" href="static/css/blueprint/ie.css" type="text/css" media="screen, projection"/>
     <![endif]-->
     <link rel="stylesheet" href="static/css/blueprint/buttons.css" type="text/css" media="screen, projection"/> 
+    <link rel="stylesheet" href="static/css/style.css" type="text/css" media="screen" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
     <script type="text/javascript" src="json2.js"></script>
-    <script type="text/javascript" src="tiger.min.js"></script>
+    <script type="text/javascript" src="tiger.js"></script>
     <script type="text/javascript" src="data.js"></script>
     <script type="text/javascript" src="index.js"></script>
   </head>
@@ -20,104 +22,104 @@
 
     
 
-    <h1>Tiger.js Javascript Templating Library</h1>
-
     <div class="container">
 
-      <h2>Example</h2>
+      <h1 class="prepend-top">Tiger.js Javascript Templating Library</h1>
+
+      <h2>Demo</h2>
 
       <div class="span-14">
         <h3>Template</h3>
-        <textarea id="template" class="span-14"><p>
-  x is <strong>${x}</strong>, 
-  x is <strong>
+        <textarea id="template" class="span-14">&lt;p&gt;
+  x is &lt;strong&gt;${x}&lt;/strong&gt;, 
+  x is &lt;strong&gt;
   %if(x%2 == 0)
   even
   %else
   odd
   %endif
-  </strong>
-</p>
+  &lt;/strong&gt;
+&lt;/p&gt;
 
-<%
+&lt;%
   console.log('!!! in a block');
   function bar() { return 'bar!!!'; }
-%>
+%&gt;
 
-<%function name="foo">
+&lt;%function name="foo"&gt;
 !!! in foo
-</%function>
+&lt;/%function&gt;
 
 
-<table>
-  <tr>
-    <th>First Name</th>
-    <th>Last Name</th>
-    <th>Email</th>
-  </tr>
+&lt;table&gt;
+  &lt;tr&gt;
+    &lt;th&gt;First Name&lt;/th&gt;
+    &lt;th&gt;Last Name&lt;/th&gt;
+    &lt;th&gt;Email&lt;/th&gt;
+  &lt;/tr&gt;
 
-  %for(var i=0; i<people.length; i++)
-  <tr class="${ (i%2) ? 'odd' : 'even'}">
-    <td>${people[i].first}</td>
-    <td>${people[i].last}</td>
-    <td><a href="mailto:${people[i].email}">${people[i].email}</a></td>
-  </tr>
+  %for(var i=0; i&lt;people.length; i++)
+  &lt;tr class="${ (i%2) ? 'odd' : 'even'}"&gt;
+    &lt;td&gt;${people[i].first}&lt;/td&gt;
+    &lt;td&gt;${people[i].last}&lt;/td&gt;
+    &lt;td&gt;&lt;a href="mailto:${people[i].email}"&gt;${people[i].email}&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
   %endfor
-</table>
+&lt;/table&gt;
 
-<p> 
-  ${bar(1,2,3,'blah')}
-  <hr/>
-  <%this:foo bar="1" qux="${context}"/>
-</p>
+&lt;p&gt; 
+  ${bar(1,2,3,'blah')|u,h,trim}
+  &lt;hr/&gt;
+  &lt;%this:foo bar="1" qux="${context}"/&gt;
+&lt;/p&gt;
 </textarea>
       </div>
       <div class="span-10 last">
         
         <h3>Data</h3>
         <textarea id="data" class="span-10">
-          <p>
-  x is <strong>${x}</strong>, 
-  x is <strong>
+          &lt;p&gt;
+  x is &lt;strong&gt;${x}&lt;/strong&gt;, 
+  x is &lt;strong&gt;
   %if(x%2 == 0)
   even
   %else
   odd
   %endif
-  </strong>
-</p>
+  &lt;/strong&gt;
+&lt;/p&gt;
 
-<%
+&lt;%
   console.log('!!! in a block');
   function bar() { return 'bar!!!'; }
-%>
+%&gt;
 
-<%function name="foo">
+&lt;%function name="foo"&gt;
 !!! in foo
-</%function>
+&lt;/%function&gt;
 
 
-<table>
-  <tr>
-    <th>First Name</th>
-    <th>Last Name</th>
-    <th>Email</th>
-  </tr>
+&lt;table&gt;
+  &lt;tr&gt;
+    &lt;th&gt;First Name&lt;/th&gt;
+    &lt;th&gt;Last Name&lt;/th&gt;
+    &lt;th&gt;Email&lt;/th&gt;
+  &lt;/tr&gt;
 
-  %for(var i=0; i<people.length; i++)
-  <tr class="${ (i%2) ? 'odd' : 'even'}">
-    <td>${people[i].first}</td>
-    <td>${people[i].last}</td>
-    <td><a href="mailto:${people[i].email}">${people[i].email}</a></td>
-  </tr>
+  %for(var i=0; i&lt;people.length; i++)
+  &lt;tr class="${ (i%2) ? 'odd' : 'even'}"&gt;
+    &lt;td&gt;${people[i].first}&lt;/td&gt;
+    &lt;td&gt;${people[i].last}&lt;/td&gt;
+    &lt;td&gt;&lt;a href="mailto:${people[i].email}"&gt;${people[i].email}&lt;/a&gt;&lt;/td&gt;
+  &lt;/tr&gt;
   %endfor
-</table>
+&lt;/table&gt;
 
-<p> 
-  ${bar(1,2,3,'blah')}
-  <hr/>
-  <%this:foo bar="1" qux="${context}"/>
-</p>
+&lt;p&gt; 
+  ${bar(1,2,3,'blah')|u,h,trim}
+  &lt;hr/&gt;
+  &lt;%this:foo bar="1" qux="${context}"/&gt;
+&lt;/p&gt;
 
         </textarea>
 
@@ -140,34 +142,169 @@
         </p>
 
         
-    <div class="span-14">
-      <h3>Environment</h3>
-    
-      <p>
-          Templates are executed inside of two contexts, namespace and
-          locals.  Namespace contains additional objects "mounted" to
-          the template's scope.  Locals contains the variable
-          context passed to the template's render function and availble
-          in template scope.  
-        </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Basic Usage</h3>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+        <p class="body large alt">
+
+        
+
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     
 
         
-    <div class="span-14">
-      <h3>Context</h3>
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Template Objects</h3>
+
+        <p class="body large alt">
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
+    </div>
+
+    <hr class="space clear"/>
     
-      <p>
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Building Templates</h3>
+
+        <p class="body large alt">
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Rendering Templates</h3>
+
+        <p class="body large alt">
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">The Sandbox</h3>
+
+        <p class="body large alt">
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">The Environment</h3>
+
+        <p class="body large alt">
+          Templates are executed inside of two contexts, namespace and
+          locals.  Namespace contains additional objects "mounted" to
+          the template's scope.  Locals contains the variable
+          context passed to the template's render function and availble
+          in template scope.  
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
+    </div>
+
+    <hr class="space clear"/>
+    
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Render Context</h3>
+
+        <p class="body large alt">
           The local scope contains the templates' context variable
           accessible as "context".  The context contain's the currently
           rendering template's state.  Locals, namespace, this are
@@ -176,117 +313,152 @@
           output.  The .get() method will return the rendered
           template.
         </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     
 
         
-    <div class="span-14">
-      <h3>This</h3>
-    
-      <p>
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Template Context / This</h3>
+
+        <p class="body large alt">
           Templates are called with a special "this" variable contained in
           the context.  When functions are defined they will be inserted
           into the template's "this" context and available as methods of
           the template.
         </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     
 
         
-    <div class="span-14">
-      <h3>Expressions</h3>
-    
-      <p>
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Expressions</h3>
+
+        <p class="body large alt">
           Expressions are marked by . Expressions are inserted
           directly into the generated code.
         </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     
         
         
-    <div class="span-14">
-      <h3>Blocks</h3>
-    
-      <p>
-          Blocks are denoted by &lt;% ... %&gt; tags.  Blocks are inserted
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Blocks</h3>
+
+        <p class="body large alt">
+          Blocks are denoted by &amp;lt;% ... %&amp;gt; tags.  Blocks are inserted
           directly into the generated code.
         </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
-    </div>
-
-    <hr class="space clear"/>
-    
-
-        
-    <div class="span-14">
-      <h3>Control Structures</h3>
-    
-      <p>  
-        </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
-    </div>
-
-    <div class="span-5 last">
-      <h4>Output</h4>
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>
     
 
         
-    <div class="span-14">
-      <h3>Functions</h3>
-    
-      <p>  
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Control Structures</h3>
+
+        <p class="body large alt">  
         </p>    
-    </div>
-    
-    <div class="span-5">
-      <h4>Example</h4>
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
     </div>
 
-    <div class="span-5 last">
-      <h4>Output</h4>
+    <hr class="space clear"/>
+    
+
+        
+    <div class="box">
+      <div class="section span-14">
+        <h3 class="heading">Functions</h3>
+
+        <p class="body large alt">  
+        </p>    
+      </div>
+      
+      <div class="span-9 last">
+        <h4>Example</h4>
+        <textarea class="span-9 text">
+        var template = tiger('hello world');
+        var output = template.render({});       
+        </textarea>        
+        <h4 class="clear">Output</h4>
+        <textarea class="span-9 text"></textarea>
+      </div>
+
+      <br class="clear"/>
     </div>
 
     <hr class="space clear"/>

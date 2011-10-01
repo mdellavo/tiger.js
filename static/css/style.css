@@ -1,0 +1,12 @@
+h1 {
+    font-family: 'Allan', cursive;
+}
+
+.section p {
+    text-align: justify;
+}
+
+textarea {
+    height:6em;
+    font-family: 'Inconsolata', sans-serif;
+}
